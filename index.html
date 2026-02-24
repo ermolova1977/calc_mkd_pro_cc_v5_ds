@@ -2,11 +2,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>МКД Cost Calculator — CC v2.0 (с памятью)</title>
+  <title>МКД Cost Calculator — CC v2.0 (с памятью + PDF)</title>
 
-  <!-- PDF EXPORT (локально, без CDN): положите файлы в ./vendor/ -->
-  <script defer src="./vendor/html2canvas.min.js"></script>
-  <script defer src="./vendor/jspdf.umd.min.js"></script>
+  <!-- PDF Export: html2canvas + jsPDF через CDN (всегда доступны) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root{
@@ -731,48 +731,54 @@
       }
     }
 
-    // ---------- PDF export ----------
+    // ---------- PDF export (исправлено: проверка наличия библиотек) ----------
     async function exportPdf(){
+      // Проверяем, что библиотеки загружены
       if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined"){
-        alert("Не найдены html2canvas/jspdf. Проверьте ./vendor/html2canvas.min.js и ./vendor/jspdf.umd.min.js");
+        alert("Библиотеки для PDF ещё не загрузились. Пожалуйста, подождите или обновите страницу.");
         return;
       }
       document.body.classList.add("export-mode");
       await new Promise(r => setTimeout(r, 120));
 
       const root = document.getElementById("reportRoot");
-      const canvas = await html2canvas(root, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-      const imgData = canvas.toDataURL("image/png");
+      try {
+        const canvas = await html2canvas(root, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+        const imgData = canvas.toDataURL("image/png");
 
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
 
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      let y = 0;
-      let remaining = imgHeight;
+        let y = 0;
+        let remaining = imgHeight;
 
-      if (imgHeight <= pageHeight){
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      } else {
-        while (remaining > 0){
-          pdf.addImage(imgData, "PNG", 0, -y, imgWidth, imgHeight);
-          remaining -= pageHeight;
-          y += pageHeight;
-          if (remaining > 0) pdf.addPage();
+        if (imgHeight <= pageHeight){
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        } else {
+          while (remaining > 0){
+            pdf.addImage(imgData, "PNG", 0, -y, imgWidth, imgHeight);
+            remaining -= pageHeight;
+            y += pageHeight;
+            if (remaining > 0) pdf.addPage();
+          }
         }
+
+        const now = new Date();
+        const pad = (n)=>String(n).padStart(2,"0");
+        const fname = `MKD_CC_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.pdf`;
+        pdf.save(fname);
+      } catch (error) {
+        console.error("Ошибка при создании PDF:", error);
+        alert("Не удалось создать PDF. Подробности в консоли.");
+      } finally {
+        document.body.classList.remove("export-mode");
       }
-
-      const now = new Date();
-      const pad = (n)=>String(n).padStart(2,"0");
-      const fname = `MKD_CC_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.pdf`;
-      pdf.save(fname);
-
-      document.body.classList.remove("export-mode");
     }
 
     // ---------- init ----------
@@ -863,3 +869,4 @@
   </script>
 </body>
 </html>
+```
