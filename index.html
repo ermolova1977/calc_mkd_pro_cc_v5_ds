@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>МКД Cost Calculator — CC v2.0 (PDF фикс)</title>
+  <title>МКД Cost Calculator — CC v2.0 (альбомный PDF)</title>
 
-  <!-- PDF Export: html2canvas + jsPDF через CDN (актуальные версии) -->
+  <!-- PDF Export: html2canvas + jsPDF через CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -55,12 +55,10 @@
     .small{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35;}
     .hr{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:10px 0 12px;}
 
-    /* Базовые стили таблиц */
     table{
       width:100%;
       border-collapse:collapse;
       font-size:12px;
-      table-layout:auto; /* по умолчанию автоматическая ширина */
     }
     th, td{
       padding:9px 8px;
@@ -68,7 +66,7 @@
       vertical-align:middle;
     }
     th{color:#cfe0ff;text-align:left;font-weight:600;}
-    td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums; white-space:nowrap;} /* числа не переносить */
+    td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums; white-space:nowrap;}
 
     .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
     @media (max-width: 720px){ .kpi{grid-template-columns:1fr 1fr;} }
@@ -114,22 +112,22 @@
     .margin-mid{color:var(--warn);}
     .margin-bad{color:var(--bad);}
 
-    .sens-wrap{margin-top:12px;}
-    .sens-table{width:100%;border-collapse:collapse;font-size:12px;}
-    .sens-table th, .sens-table td{border-bottom:1px solid rgba(36,48,85,.7);padding:7px 6px;}
-    .sens-table th{color:#cfe0ff;text-align:center;font-weight:600;}
-    .sens-table td{text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;}
+    .sens-wrap{margin-top:12px; overflow-x: auto;}
+    .sens-table{width:100%; border-collapse:collapse; font-size:12px;}
+    .sens-table th, .sens-table td{border-bottom:1px solid rgba(36,48,85,.7);padding:7px 6px; text-align:center;}
+    .sens-table th{color:#cfe0ff;font-weight:600;}
+    .sens-table td{font-family:var(--mono);font-variant-numeric:tabular-nums;}
 
     .mini-note{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.4;}
 
-    /* ---------- РЕЖИМ ЭКСПОРТА (белый фон, чёткие границы) ---------- */
+    /* ---------- РЕЖИМ ЭКСПОРТА (только смена цвета и скрытие кнопок) ---------- */
     body.export-mode{
       background:#ffffff !important;
       color:#0b1020 !important;
     }
     body.export-mode .card{
       background:#ffffff !important;
-      border:1px solid #a0b3d9 !important; /* более контрастная граница */
+      border:1px solid #a0b3d9 !important;
       box-shadow:none !important;
     }
     body.export-mode .card h2,
@@ -149,88 +147,22 @@
       background:#ffffff !important;
       color:#0b1020 !important;
       border:1px solid #a0b3d9 !important;
-      box-shadow:none !important;
     }
     body.export-mode .input-wrap::after{
       color:#64748b !important;
     }
-    /* Таблицы: добавляем полные границы и фиксированную раскладку */
-    body.export-mode table{
-      border-collapse:collapse !important;
-      width:100% !important;
-      table-layout:fixed !important; /* фиксированная ширина, чтобы колонки не сжимались */
-    }
-    body.export-mode th,
-    body.export-mode td{
-      border:1px solid #cbd5e1 !important; /* явные границы */
-      padding:8px 6px !important;
-      vertical-align:middle !important;
-    }
-    body.export-mode td.num{
-      text-align:right !important;
-      white-space:nowrap !important; /* не переносить числа */
-      overflow:visible !important;
-    }
-    /* зададим примерные пропорции колонок: первая 40%, вторая 30%, третья 30% */
-    body.export-mode th:first-child,
-    body.export-mode td:first-child {
-      width:40% !important;
-    }
-    body.export-mode th:nth-child(2),
-    body.export-mode td:nth-child(2),
-    body.export-mode th:nth-child(3),
-    body.export-mode td:nth-child(3) {
-      width:30% !important;
-    }
-    /* для KPI карточек оставляем без изменений, только фон */
     body.export-mode .k{
       background:#f8fafc !important;
       border:1px solid #cbd5e1 !important;
     }
-    /* скрываем кнопки */
+    /* Скрываем все кнопки */
     body.export-mode button,
     body.export-mode .btns button,
     body.export-mode .print-btn,
     body.export-mode .btns{
       display:none !important;
     }
-
-    /* ---------- РЕЖИМ ПЕЧАТИ ---------- */
-    @media print {
-      body{background:#ffffff !important;color:#0b1020 !important;}
-      .card{
-        background:#ffffff !important;
-        border:1px solid #a0b3d9 !important;
-        box-shadow:none !important;
-      }
-      .card h2, th{color:#0b1020 !important;}
-      .sub, label, .small, .report-meta, .badge, .pill{color:#334155 !important;}
-      input, select{
-        background:#ffffff !important;
-        color:#0b1020 !important;
-        border:1px solid #a0b3d9 !important;
-        box-shadow:none !important;
-      }
-      .input-wrap::after{color:#64748b !important;}
-      table{
-        border-collapse:collapse !important;
-        width:100% !important;
-        table-layout:fixed !important;
-      }
-      th, td{
-        border:1px solid #cbd5e1 !important;
-        padding:8px 6px !important;
-      }
-      td.num{
-        text-align:right !important;
-        white-space:nowrap !important;
-      }
-      th:first-child, td:first-child { width:40% !important; }
-      th:nth-child(2), td:nth-child(2),
-      th:nth-child(3), td:nth-child(3) { width:30% !important; }
-      .k{background:#f8fafc !important;border:1px solid #cbd5e1 !important;}
-      button, .print-btn, .btns button, .btns{display:none !important;}
-    }
+    /* Никаких принудительных табличных раскладок — оставляем как есть */
   </style>
 </head>
 
@@ -251,7 +183,7 @@
     </div>
 
     <div class="grid">
-      <!-- LEFT: INPUTS (полностью сохранены) -->
+      <!-- LEFT: INPUTS -->
       <div class="card">
         <h2>1) Исходные данные</h2>
         <div class="row"><label for="gba">GBA (м²)</label><input id="gba" type="text" value="20000" inputmode="numeric" /></div>
@@ -302,7 +234,7 @@
         <div class="row"><label for="cov_ltv">Max LTV (%)</label><input id="cov_ltv" type="text" value="70" inputmode="decimal" /></div>
 
         <div class="btns">
-          <button id="btnPdf">Экспорт в PDF (A4) — кредитный комитет</button>
+          <button id="btnPdf">Экспорт в PDF (A4 альбомная)</button>
           <button class="secondary" id="btnDemo">Демо-набор</button>
           <button class="secondary" id="btnReset">Сброс</button>
         </div>
@@ -630,7 +562,7 @@
       }
     }
 
-    // ---------- PDF export (исправленный) ----------
+    // ---------- PDF export (альбомный, щадящие стили) ----------
     async function exportPdf(){
       if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined"){
         alert("Библиотеки для PDF ещё не загрузились. Пожалуйста, подождите или обновите страницу.");
@@ -638,8 +570,7 @@
       }
       
       document.body.classList.add("export-mode");
-      // Увеличим таймаут, чтобы стили точно применились
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 500));
 
       const root = document.getElementById("reportRoot");
       if (!root) {
@@ -649,14 +580,14 @@
       }
 
       try {
-        console.log("Начинаем рендеринг PDF...");
+        console.log("Начинаем рендеринг PDF (альбомный)...");
         const canvas = await html2canvas(root, { 
-          scale: 2, 
+          scale: 2.5,               // повышенная чёткость
           useCORS: true, 
           backgroundColor: "#ffffff",
           logging: false,
           allowTaint: false,
-          windowWidth: 1400,       // фиксированная ширина для предотвращения сжатия
+          windowWidth: 1600,         // ширина для альбомной ориентации
         });
         
         console.log("Canvas создан, размер:", canvas.width, "x", canvas.height);
@@ -667,7 +598,8 @@
 
         const imgData = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+        // АЛЬБОМНАЯ ОРИЕНТАЦИЯ
+        const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
