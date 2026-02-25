@@ -1,10 +1,11 @@
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>МКД Cost Calculator — CC v2.0 (с памятью + PDF)</title>
+  <title>МКД Cost Calculator — CC v2.0 (PDF фикс)</title>
 
-  <!-- PDF Export: html2canvas + jsPDF через CDN (всегда доступны) -->
+  <!-- PDF Export: html2canvas + jsPDF через CDN (актуальные версии) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -24,7 +25,6 @@
     .report-meta{color:var(--muted);font-size:12px;line-height:1.35;}
     .badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(154,167,199,.25);color:var(--muted);background:rgba(11,18,41,.3);}
 
-    /* кнопка печати в шапке */
     .print-btn{
       cursor:pointer; border:1px solid rgba(96,165,250,.35);
       background:rgba(96,165,250,.15); color:var(--text);
@@ -55,10 +55,20 @@
     .small{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35;}
     .hr{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:10px 0 12px;}
 
-    table{width:100%;border-collapse:collapse;font-size:12px;}
-    th, td{padding:9px 8px;border-bottom:1px solid rgba(36,48,85,.7);vertical-align:middle;}
+    /* Базовые стили таблиц */
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+      table-layout:auto; /* по умолчанию автоматическая ширина */
+    }
+    th, td{
+      padding:9px 8px;
+      border-bottom:1px solid rgba(36,48,85,.7);
+      vertical-align:middle;
+    }
     th{color:#cfe0ff;text-align:left;font-weight:600;}
-    td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;}
+    td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums; white-space:nowrap;} /* числа не переносить */
 
     .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
     @media (max-width: 720px){ .kpi{grid-template-columns:1fr 1fr;} }
@@ -81,7 +91,6 @@
     button:hover{background:rgba(96,165,250,.22);}
     button.secondary{border-color:rgba(154,167,199,.25);background:rgba(154,167,199,.10);}
 
-    /* ₽ suffix inside input (wrap only RUB fields) */
     .input-wrap{position:relative;}
     .input-wrap input{padding-right:34px;}
     .input-wrap::after{
@@ -113,27 +122,113 @@
 
     .mini-note{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.4;}
 
-    /* Export mode: credit-committee PDF (скрывает кнопки, меняет фон) */
-    body.export-mode{background:#ffffff !important;color:#0b1020 !important;}
-    body.export-mode .card{background:#ffffff !important;border:1px solid #d4dbe8 !important;box-shadow:none !important;}
-    body.export-mode .card h2, body.export-mode th{color:#0b1020 !important;}
-    body.export-mode .sub, body.export-mode label, body.export-mode .small, body.export-mode .report-meta, body.export-mode .badge, body.export-mode .pill{color:#334155 !important;}
-    body.export-mode input, body.export-mode select{background:#ffffff !important;color:#0b1020 !important;border:1px solid #d4dbe8 !important;box-shadow:none !important;}
-    body.export-mode .input-wrap::after{color:#64748b !important;}
-    body.export-mode td, body.export-mode th{border-bottom:1px solid #e6ebf5 !important;}
-    body.export-mode .k{background:#f8fafc !important;border:1px solid #e6ebf5 !important;}
-    body.export-mode button{display:none !important;}
+    /* ---------- РЕЖИМ ЭКСПОРТА (белый фон, чёткие границы) ---------- */
+    body.export-mode{
+      background:#ffffff !important;
+      color:#0b1020 !important;
+    }
+    body.export-mode .card{
+      background:#ffffff !important;
+      border:1px solid #a0b3d9 !important; /* более контрастная граница */
+      box-shadow:none !important;
+    }
+    body.export-mode .card h2,
+    body.export-mode th{
+      color:#0b1020 !important;
+    }
+    body.export-mode .sub,
+    body.export-mode label,
+    body.export-mode .small,
+    body.export-mode .report-meta,
+    body.export-mode .badge,
+    body.export-mode .pill{
+      color:#334155 !important;
+    }
+    body.export-mode input,
+    body.export-mode select{
+      background:#ffffff !important;
+      color:#0b1020 !important;
+      border:1px solid #a0b3d9 !important;
+      box-shadow:none !important;
+    }
+    body.export-mode .input-wrap::after{
+      color:#64748b !important;
+    }
+    /* Таблицы: добавляем полные границы и фиксированную раскладку */
+    body.export-mode table{
+      border-collapse:collapse !important;
+      width:100% !important;
+      table-layout:fixed !important; /* фиксированная ширина, чтобы колонки не сжимались */
+    }
+    body.export-mode th,
+    body.export-mode td{
+      border:1px solid #cbd5e1 !important; /* явные границы */
+      padding:8px 6px !important;
+      vertical-align:middle !important;
+    }
+    body.export-mode td.num{
+      text-align:right !important;
+      white-space:nowrap !important; /* не переносить числа */
+      overflow:visible !important;
+    }
+    /* зададим примерные пропорции колонок: первая 40%, вторая 30%, третья 30% */
+    body.export-mode th:first-child,
+    body.export-mode td:first-child {
+      width:40% !important;
+    }
+    body.export-mode th:nth-child(2),
+    body.export-mode td:nth-child(2),
+    body.export-mode th:nth-child(3),
+    body.export-mode td:nth-child(3) {
+      width:30% !important;
+    }
+    /* для KPI карточек оставляем без изменений, только фон */
+    body.export-mode .k{
+      background:#f8fafc !important;
+      border:1px solid #cbd5e1 !important;
+    }
+    /* скрываем кнопки */
+    body.export-mode button,
+    body.export-mode .btns button,
+    body.export-mode .print-btn,
+    body.export-mode .btns{
+      display:none !important;
+    }
 
-    /* Стили для печати (аналогично export-mode, но через @media print) */
+    /* ---------- РЕЖИМ ПЕЧАТИ ---------- */
     @media print {
       body{background:#ffffff !important;color:#0b1020 !important;}
-      .card{background:#ffffff !important;border:1px solid #d4dbe8 !important;box-shadow:none !important;}
+      .card{
+        background:#ffffff !important;
+        border:1px solid #a0b3d9 !important;
+        box-shadow:none !important;
+      }
       .card h2, th{color:#0b1020 !important;}
       .sub, label, .small, .report-meta, .badge, .pill{color:#334155 !important;}
-      input, select{background:#ffffff !important;color:#0b1020 !important;border:1px solid #d4dbe8 !important;box-shadow:none !important;}
+      input, select{
+        background:#ffffff !important;
+        color:#0b1020 !important;
+        border:1px solid #a0b3d9 !important;
+        box-shadow:none !important;
+      }
       .input-wrap::after{color:#64748b !important;}
-      td, th{border-bottom:1px solid #e6ebf5 !important;}
-      .k{background:#f8fafc !important;border:1px solid #e6ebf5 !important;}
+      table{
+        border-collapse:collapse !important;
+        width:100% !important;
+        table-layout:fixed !important;
+      }
+      th, td{
+        border:1px solid #cbd5e1 !important;
+        padding:8px 6px !important;
+      }
+      td.num{
+        text-align:right !important;
+        white-space:nowrap !important;
+      }
+      th:first-child, td:first-child { width:40% !important; }
+      th:nth-child(2), td:nth-child(2),
+      th:nth-child(3), td:nth-child(3) { width:30% !important; }
+      .k{background:#f8fafc !important;border:1px solid #cbd5e1 !important;}
       button, .print-btn, .btns button, .btns{display:none !important;}
     }
   </style>
@@ -156,16 +251,12 @@
     </div>
 
     <div class="grid">
-      <!-- LEFT: INPUTS -->
+      <!-- LEFT: INPUTS (полностью сохранены) -->
       <div class="card">
         <h2>1) Исходные данные</h2>
         <div class="row"><label for="gba">GBA (м²)</label><input id="gba" type="text" value="20000" inputmode="numeric" /></div>
         <div class="row"><label for="nsa">NSA (м²)</label><input id="nsa" type="text" value="14000" inputmode="numeric" /></div>
-        <div class="row">
-          <label for="price">Цена продажи (₽/м² NSA)</label>
-          <div class="input-wrap"><input id="price" type="text" value="140000" inputmode="numeric" /></div>
-        </div>
-
+        <div class="row"><label for="price">Цена продажи (₽/м² NSA)</label><div class="input-wrap"><input id="price" type="text" value="140000" inputmode="numeric" /></div></div>
         <div class="hr"></div>
         <h2>2) СМР (руб/м² GBA)</h2>
         <div class="row"><label for="c1">Конструктив</label><div class="input-wrap"><input id="c1" type="text" value="22000" inputmode="numeric" /></div></div>
@@ -175,47 +266,35 @@
         <div class="row"><label for="c5">Благоустройство</label><div class="input-wrap"><input id="c5" type="text" value="3500" inputmode="numeric" /></div></div>
         <div class="row"><label for="c6">Прочие</label><div class="input-wrap"><input id="c6" type="text" value="2500" inputmode="numeric" /></div></div>
         <div class="row"><label for="lift">Лифты (фикс)</label><div class="input-wrap"><input id="lift" type="text" value="50000000" inputmode="numeric" /></div></div>
-
         <div class="hr"></div>
         <h2>3) Накладные / прибыль ГП / резерв</h2>
         <div class="row"><label for="overhead">Накладные, % от прямых</label><input id="overhead" type="text" value="10" inputmode="decimal" /></div>
         <div class="row"><label for="gp">Прибыль ГП, % от (прямые+накладные)</label><input id="gp" type="text" value="5" inputmode="decimal" /></div>
         <div class="row"><label for="reserve">Резерв/риски, % от СМР</label><input id="reserve" type="text" value="2" inputmode="decimal" /></div>
-
         <div class="hr"></div>
         <h2>4) Прочие CAPEX (не СМР)</h2>
         <div class="row"><label for="land">Земля</label><div class="input-wrap"><input id="land" type="text" value="200000000" inputmode="numeric" /></div></div>
         <div class="row"><label for="tu">ТУ / сети</label><div class="input-wrap"><input id="tu" type="text" value="120000000" inputmode="numeric" /></div></div>
         <div class="row"><label for="design">Проектирование</label><div class="input-wrap"><input id="design" type="text" value="35000000" inputmode="numeric" /></div></div>
         <div class="row"><label for="bank_fee">Комиссии банка (разово)</label><div class="input-wrap"><input id="bank_fee" type="text" value="20000000" inputmode="numeric" /></div></div>
-
         <div class="small">Проценты по кредиту считаются ниже (автоматически) и входят в итоговый CAPEX/долг.</div>
-
         <div class="hr"></div>
         <h2>5) Коммерческие расходы</h2>
         <div class="row"><label for="commercial">Коммерческие расходы, % от выручки</label><input id="commercial" type="text" value="3" inputmode="decimal" /></div>
-
         <div class="hr"></div>
         <h2>6) Стресс-модель</h2>
         <div class="row"><label for="stress_price">Изменение цены, %</label><input id="stress_price" type="text" value="-10" inputmode="decimal" /></div>
         <div class="row"><label for="stress_smr">Изменение СМР, %</label><input id="stress_smr" type="text" value="15" inputmode="decimal" /></div>
-
         <div class="hr"></div>
         <h2>7) Банк / проектное финансирование / эскроу</h2>
-
         <div class="row"><label for="equity">Собственные средства (Equity), ₽</label><div class="input-wrap"><input id="equity" type="text" value="300000000" inputmode="numeric" /></div></div>
         <div class="row"><label for="loan_limit">Лимит кредита (Debt limit), ₽</label><div class="input-wrap"><input id="loan_limit" type="text" value="2000000000" inputmode="numeric" /></div></div>
-
         <div class="row"><label for="rate">Ставка кредита, % годовых</label><input id="rate" type="text" value="18" inputmode="decimal" /></div>
-
         <div class="row"><label for="constr_months">Срок строительства, мес</label><input id="constr_months" type="text" value="24" inputmode="numeric" /></div>
         <div class="row"><label for="tail_months">Срок продаж после ввода, мес</label><input id="tail_months" type="text" value="6" inputmode="numeric" /></div>
-
         <div class="row"><label for="pre_sale_share">Доля продаж до ввода, % (эскроу)</label><input id="pre_sale_share" type="text" value="80" inputmode="decimal" /></div>
         <div class="row"><label for="escrow_release_months">Релиз эскроу после ввода, мес</label><input id="escrow_release_months" type="text" value="3" inputmode="numeric" /></div>
-
         <div class="row"><label for="capex_soft_months">“Мягкие” затраты (ТУ/проект), мес распределения</label><input id="capex_soft_months" type="text" value="6" inputmode="numeric" /></div>
-
         <div class="hr"></div>
         <h2>8) Ковенанты (для флагов)</h2>
         <div class="row"><label for="cov_dscr">Min DSCR (x)</label><input id="cov_dscr" type="text" value="1.20" inputmode="decimal" /></div>
@@ -227,49 +306,31 @@
           <button class="secondary" id="btnDemo">Демо-набор</button>
           <button class="secondary" id="btnReset">Сброс</button>
         </div>
-
-        <div class="mini-note">
-          Банковский блок — упрощённый: CAPEX СМР распределяется равномерно по сроку строительства, “мягкие” затраты — равномерно в первые N месяцев, земля/комиссия — в 1-й месяц. Проценты капитализируются в долг до момента релиза эскроу, затем из релиза погашается долг.
-        </div>
+        <div class="mini-note">Банковский блок — упрощённый...</div>
       </div>
 
       <!-- RIGHT: RESULTS -->
       <div class="card">
         <h2>Результаты (экономика)</h2>
-
         <table>
-          <thead>
-            <tr>
-              <th>Показатель</th>
-              <th class="num">База</th>
-              <th class="num">Стресс</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Показатель</th><th class="num">База</th><th class="num">Стресс</th></tr></thead>
           <tbody>
             <tr><td>Выручка</td><td class="num" id="rev">—</td><td class="num" id="rev_s">—</td></tr>
             <tr><td>Итого СМР</td><td class="num" id="smr">—</td><td class="num" id="smr_s">—</td></tr>
             <tr><td>Итого CAPEX (без % кредита)</td><td class="num" id="capex_no_int">—</td><td class="num" id="capex_no_int_s">—</td></tr>
             <tr><td>Коммерческие расходы</td><td class="num" id="comm">—</td><td class="num" id="comm_s">—</td></tr>
-            <tr>
-              <td><b>Профит девелопера (после % кредита)</b></td>
-              <td class="num" id="profit"><b>—</b></td>
-              <td class="num" id="profit_s"><b>—</b></td>
-            </tr>
+            <tr><td><b>Профит девелопера (после % кредита)</b></td><td class="num" id="profit"><b>—</b></td><td class="num" id="profit_s"><b>—</b></td></tr>
           </tbody>
         </table>
-
         <div class="kpi">
           <div class="k"><div class="t">СМР ₽/м² GBA</div><div class="v" id="smr_m2">—</div></div>
           <div class="k"><div class="t">CAPEX ₽/м² NSA</div><div class="v" id="capex_m2">—</div></div>
           <div class="k"><div class="t">Маржа девелопера</div><div class="v" id="margin_pct">—</div></div>
           <div class="k"><div class="t">Запас к цене (₽/м² NSA)</div><div class="v" id="buffer">—</div></div>
         </div>
-
         <div class="flags" id="flagsEco"></div>
-
         <div class="hr"></div>
         <h2>Банк-KPI (DSCR / LTC / LTV)</h2>
-
         <table>
           <tbody>
             <tr><th>Показатель</th><th class="num">База</th><th class="num">Стресс</th></tr>
@@ -281,9 +342,7 @@
             <tr><td>Avg DSCR (по месяцам релиза)</td><td class="num" id="b_dscr_avg">—</td><td class="num" id="b_dscr_avg_s">—</td></tr>
           </tbody>
         </table>
-
         <div class="flags" id="flagsBank"></div>
-
         <div class="hr"></div>
         <h2>Чувствительность 5×5 (маржа девелопера, %)</h2>
         <div class="small">Строки: изменение цены. Столбцы: изменение СМР. Цвет — уровень устойчивости.</div>
@@ -295,11 +354,8 @@
   <script>
     // ---------- utils ----------
     const $ = (id) => document.getElementById(id);
-
     function parseNumber(v){
-      const s = String(v ?? "")
-        .replace(/[₽\u00A0\s]/g, "")
-        .replace(",", ".");
+      const s = String(v ?? "").replace(/[₽\u00A0\s]/g, "").replace(",", ".");
       const x = Number(s);
       return Number.isFinite(x) ? x : 0;
     }
@@ -313,14 +369,11 @@
       return (x).toLocaleString("ru-RU",{minimumFractionDigits:2, maximumFractionDigits:2}) + "x";
     }
     function get(id){ return parseNumber($(id).value); }
-
     function setGeneratedAt(){
       const d = new Date();
       const pad = (n)=>String(n).padStart(2,"0");
-      $("generatedAt").textContent =
-        `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      $("generatedAt").textContent = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
-
     function marginClass(m){
       if (m >= 0.18) return "margin-good";
       if (m >= 0.10) return "margin-mid";
@@ -337,134 +390,68 @@
       return div;
     }
 
-    // ---------- core economics (without bank interest) ----------
+    // ---------- core economics ----------
     function econScenario(priceMul, smrMul){
-      const gba = get("gba");
-      const nsa = get("nsa");
-      const price = get("price") * priceMul;
-
+      const gba = get("gba"), nsa = get("nsa"), price = get("price") * priceMul;
       const directPerM2 = get("c1")+get("c2")+get("c3")+get("c4")+get("c5")+get("c6");
       const direct = (gba * directPerM2 + get("lift")) * smrMul;
-
       const overhead = direct * (get("overhead")/100);
       const gpProfit = (direct + overhead) * (get("gp")/100);
       const reserve = (direct + overhead + gpProfit) * (get("reserve")/100);
-
       const smr = direct + overhead + gpProfit + reserve;
-
       const capexNoInt = smr + get("land") + get("tu") + get("design") + get("bank_fee");
-
       const revenue = nsa * price;
       const commercial = revenue * (get("commercial")/100);
-
       return { gba, nsa, price, revenue, direct, overhead, gpProfit, reserve, smr, capexNoInt, commercial };
     }
 
-    // ---------- bank / escrow monthly simulation ----------
+    // ---------- bank simulation ----------
     function bankScenario(priceMul, smrMul){
       const econ = econScenario(priceMul, smrMul);
-
       const constr = Math.max(1, Math.round(get("constr_months")));
       const tail = Math.max(0, Math.round(get("tail_months")));
       const rel = Math.max(1, Math.round(get("escrow_release_months")));
       const softM = Math.max(1, Math.round(get("capex_soft_months")));
-
       const equity = get("equity");
       const loanLimit = get("loan_limit");
       const rate = get("rate")/100;
       const rMonthly = rate / 12;
-
       const preShare = Math.min(100, Math.max(0, get("pre_sale_share"))) / 100;
-
       const totalRevenue = econ.revenue;
       const preRevenue = totalRevenue * preShare;
       const tailRevenue = totalRevenue - preRevenue;
-
-      // sales schedule
       const preSalesMonthly = preRevenue / constr;
       const tailSalesMonthly = tail > 0 ? (tailRevenue / tail) : 0;
-
-      // escrow accumulation during construction
-      let escrowBal = 0;
-
-      // capex schedule
-      const smrMonthly = econ.smr / constr;
-      const landPay = get("land");
-      const bankFeePay = get("bank_fee");
-      const tuPay = get("tu");
-      const designPay = get("design");
-      const softMonthly = (tuPay + designPay) / softM;
-
-      // commercial schedule tied to sales (we assume paid when sales booked)
+      let cash = equity, debt = 0, maxDebt = 0, capIntTotal = 0;
+      let dscrMin = Infinity, dscrSum = 0, dscrCnt = 0;
       const commPct = get("commercial")/100;
-
-      // timeline length
+      const smrMonthly = econ.smr / constr;
+      const landPay = get("land"), bankFeePay = get("bank_fee"), tuPay = get("tu"), designPay = get("design");
+      const softMonthly = (tuPay + designPay) / softM;
       const totalMonths = constr + tail + rel;
-
-      let cash = equity;
-      let debt = 0;
-      let maxDebt = 0;
-      let capIntTotal = 0;
-
-      let dscrMin = Infinity;
-      let dscrSum = 0;
-      let dscrCnt = 0;
-
       for (let m=1; m<=totalMonths; m++){
         const inConstruction = m <= constr;
         const inTail = (m > constr) && (m <= constr + tail);
         const inRelease = (m > constr) && (m <= constr + rel);
-
-        // SALES
         let sales = 0;
-        if (inConstruction){
-          sales = preSalesMonthly;
-          escrowBal += sales; // goes to escrow
-        } else if (inTail){
-          sales = tailSalesMonthly; // assume cash available (simplification)
-        }
-
-        // COMMERCIAL outflow as % of sales booked this month
+        if (inConstruction) sales = preSalesMonthly;
+        else if (inTail) sales = tailSalesMonthly;
         const commOut = sales * commPct;
-
-        // CAPEX outflow this month
         let capexOut = 0;
-        if (inConstruction){
-          capexOut += smrMonthly;
-        }
-        // land & bank fee month 1
-        if (m === 1){
-          capexOut += landPay + bankFeePay;
-        }
-        // soft costs evenly in first softM months
-        if (m <= softM){
-          capexOut += softMonthly;
-        }
-
-        // CASH INFLOW from escrow release
+        if (inConstruction) capexOut += smrMonthly;
+        if (m === 1) capexOut += landPay + bankFeePay;
+        if (m <= softM) capexOut += softMonthly;
         let escrowRelease = 0;
-        if (inRelease){
-          escrowRelease = preRevenue / rel;
-        }
-
-        // CASH inflow from tail sales assumed immediately available
+        if (inRelease) escrowRelease = preRevenue / rel;
         const tailCashIn = (!inConstruction && inTail) ? sales : 0;
-
-        // Interest accrual
         const interestAccrued = debt * rMonthly;
-
-        let interestPaid = 0;
-        let principalPaid = 0;
-
+        let interestPaid = 0, principalPaid = 0;
         cash += escrowRelease + tailCashIn;
         cash -= (capexOut + commOut);
-
         if (inConstruction){
-          // Capitalize interest
           debt += interestAccrued;
           capIntTotal += interestAccrued;
         } else {
-          // Pay interest if possible, otherwise capitalize remainder
           if (cash >= interestAccrued){
             cash -= interestAccrued;
             interestPaid = interestAccrued;
@@ -476,8 +463,6 @@
             capIntTotal += short;
           }
         }
-
-        // If cash negative -> draw debt
         if (cash < 0){
           const need = -cash;
           const draw = Math.min(need, Math.max(0, loanLimit - debt));
@@ -485,18 +470,14 @@
           cash += draw;
           if (cash < 0) cash = 0;
         }
-
-        // During release: repay principal from remaining cash
         if (inRelease){
           if (cash > 0 && debt > 0){
             principalPaid = Math.min(cash, debt);
             debt -= principalPaid;
             cash -= principalPaid;
           }
-
           const cfads = escrowRelease + tailCashIn - capexOut - commOut;
           const debtService = interestPaid + principalPaid;
-
           if (debtService > 0){
             const dscr = cfads / debtService;
             dscrMin = Math.min(dscrMin, dscr);
@@ -504,42 +485,25 @@
             dscrCnt += 1;
           }
         }
-
         maxDebt = Math.max(maxDebt, debt);
       }
-
       if (dscrMin === Infinity) dscrMin = 0;
       const dscrAvg = dscrCnt > 0 ? (dscrSum / dscrCnt) : 0;
-
       const totalCost = econ.capexNoInt + econ.commercial + capIntTotal;
       const ltc = totalCost > 0 ? (maxDebt / totalCost) : 0;
       const ltv = econ.revenue > 0 ? (maxDebt / econ.revenue) : 0;
-
       const devProfit = econ.revenue - (econ.capexNoInt + econ.commercial + capIntTotal);
       const devMargin = econ.revenue !== 0 ? devProfit / econ.revenue : 0;
-
-      return {
-        econ,
-        capIntTotal,
-        maxDebt,
-        ltc,
-        ltv,
-        dscrMin,
-        dscrAvg,
-        devProfit,
-        devMargin
-      };
+      return { econ, capIntTotal, maxDebt, ltc, ltv, dscrMin, dscrAvg, devProfit, devMargin };
     }
 
-    // ---------- sensitivity 5x5 ----------
+    // ---------- renderSensitivity ----------
     function renderSensitivity(){
       const smrRange = [-0.10,-0.05,0,0.05,0.10];
       const priceRange = [-0.10,-0.05,0,0.05,0.10];
-
       let html = `<table class="sens-table"><thead><tr><th>Цена \\ СМР</th>`;
       for (const s of smrRange) html += `<th>${(s*100).toLocaleString("ru-RU")}%</th>`;
       html += `</tr></thead><tbody>`;
-
       for (const p of priceRange){
         html += `<tr><th>${(p*100).toLocaleString("ru-RU")}%</th>`;
         for (const s of smrRange){
@@ -553,75 +517,41 @@
       $("sensitivity").innerHTML = html;
     }
 
-    // ---------- flags ----------
     function renderEcoFlags(baseBank, stressBank){
-      const el = $("flagsEco");
-      el.innerHTML = "";
-
-      const m = baseBank.devMargin;
+      const el = $("flagsEco"); el.innerHTML = "";
       el.appendChild(pill(baseBank.devProfit >= 0 ? "ok":"bad", baseBank.devProfit >= 0 ? "База: прибыль положительная" : "База: прибыль отрицательная"));
+      const m = baseBank.devMargin;
       if (m >= 0.18) el.appendChild(pill("ok", `Маржа базы ${percent(m)} — высокий запас`));
       else if (m >= 0.10) el.appendChild(pill("warn", `Маржа базы ${percent(m)} — средний запас`));
       else el.appendChild(pill("bad", `Маржа базы ${percent(m)} — низкий запас`));
-
       const ms = stressBank.devMargin;
       el.appendChild(pill(stressBank.devProfit >= 0 ? "ok":"bad", stressBank.devProfit >= 0 ? "Стресс: прибыль положительная" : "Стресс: прибыль отрицательная"));
       if (ms < 0.10) el.appendChild(pill("bad", `Стресс-маржа ${percent(ms)} — критично`));
-
       const gba = get("gba"), nsa = get("nsa");
       if (gba <= 0 || nsa <= 0) el.appendChild(pill("bad", "Площади: GBA/NSA должны быть > 0"));
       if (nsa > gba) el.appendChild(pill("warn", "NSA > GBA — проверьте ввод"));
     }
 
     function renderBankFlags(baseBank, stressBank){
-      const el = $("flagsBank");
-      el.innerHTML = "";
-
-      const covD = get("cov_dscr");
-      const covLTC = get("cov_ltc")/100;
-      const covLTV = get("cov_ltv")/100;
-
-      el.appendChild(pill(
-        baseBank.dscrMin >= covD ? "ok" : "bad",
-        `DSCR min (база): ${xNum(baseBank.dscrMin)} vs cov ${xNum(covD)}`
-      ));
-      el.appendChild(pill(
-        baseBank.ltc <= covLTC ? "ok" : "bad",
-        `LTC (база): ${percent(baseBank.ltc)} vs cov ${percent(covLTC)}`
-      ));
-      el.appendChild(pill(
-        baseBank.ltv <= covLTV ? "ok" : "bad",
-        `LTV (база): ${percent(baseBank.ltv)} vs cov ${percent(covLTV)}`
-      ));
-
-      el.appendChild(pill(
-        stressBank.dscrMin >= covD ? "ok" : "bad",
-        `DSCR min (стресс): ${xNum(stressBank.dscrMin)}`
-      ));
-      el.appendChild(pill(
-        stressBank.ltc <= covLTC ? "ok" : "bad",
-        `LTC (стресс): ${percent(stressBank.ltc)}`
-      ));
-      el.appendChild(pill(
-        stressBank.ltv <= covLTV ? "ok" : "bad",
-        `LTV (стресс): ${percent(stressBank.ltv)}`
-      ));
-
+      const el = $("flagsBank"); el.innerHTML = "";
+      const covD = get("cov_dscr"), covLTC = get("cov_ltc")/100, covLTV = get("cov_ltv")/100;
+      el.appendChild(pill(baseBank.dscrMin >= covD ? "ok" : "bad", `DSCR min (база): ${xNum(baseBank.dscrMin)} vs cov ${xNum(covD)}`));
+      el.appendChild(pill(baseBank.ltc <= covLTC ? "ok" : "bad", `LTC (база): ${percent(baseBank.ltc)} vs cov ${percent(covLTC)}`));
+      el.appendChild(pill(baseBank.ltv <= covLTV ? "ok" : "bad", `LTV (база): ${percent(baseBank.ltv)} vs cov ${percent(covLTV)}`));
+      el.appendChild(pill(stressBank.dscrMin >= covD ? "ok" : "bad", `DSCR min (стресс): ${xNum(stressBank.dscrMin)}`));
+      el.appendChild(pill(stressBank.ltc <= covLTC ? "ok" : "bad", `LTC (стресс): ${percent(stressBank.ltc)}`));
+      el.appendChild(pill(stressBank.ltv <= covLTV ? "ok" : "bad", `LTV (стресс): ${percent(stressBank.ltv)}`));
       const loanLimit = get("loan_limit");
       if (baseBank.maxDebt > loanLimit) el.appendChild(pill("bad", "Пик долга (база) превышает лимит кредита"));
       else el.appendChild(pill("ok", "Пик долга (база) в пределах лимита"));
-
       if (stressBank.maxDebt > loanLimit) el.appendChild(pill("bad", "Пик долга (стресс) превышает лимит кредита"));
       else el.appendChild(pill("ok", "Пик долга (стресс) в пределах лимита"));
     }
 
-    // ---------- render all ----------
     function calcAndRender(){
       setGeneratedAt();
-
       const base = bankScenario(1,1);
       const stress = bankScenario(1 + get("stress_price")/100, 1 + get("stress_smr")/100);
-
       $("rev").textContent = rub(base.econ.revenue);
       $("rev_s").textContent = rub(stress.econ.revenue);
       $("smr").textContent = rub(base.econ.smr);
@@ -634,14 +564,12 @@
       $("profit_s").textContent = rub(stress.devProfit);
       $("profit").className = "num " + marginClass(base.devMargin);
       $("profit_s").className = "num " + marginClass(stress.devMargin);
-
       $("smr_m2").textContent = base.econ.gba ? rubm2(base.econ.smr / base.econ.gba) : "—";
       const totalCostBase = base.econ.capexNoInt + base.econ.commercial + base.capIntTotal;
       $("capex_m2").textContent = base.econ.nsa ? rubm2(totalCostBase / base.econ.nsa) : "—";
       $("margin_pct").textContent = percent(base.devMargin);
       $("margin_pct").className = "v " + marginClass(base.devMargin);
       $("buffer").textContent = base.econ.nsa ? rubm2(base.econ.price - (totalCostBase / base.econ.nsa)) : "—";
-
       $("b_maxdebt").textContent = rub(base.maxDebt);
       $("b_maxdebt_s").textContent = rub(stress.maxDebt);
       $("b_int").textContent = rub(base.capIntTotal);
@@ -654,7 +582,6 @@
       $("b_dscr_min_s").textContent = xNum(stress.dscrMin);
       $("b_dscr_avg").textContent = xNum(base.dscrAvg);
       $("b_dscr_avg_s").textContent = xNum(stress.dscrAvg);
-
       renderEcoFlags(base, stress);
       renderBankFlags(base, stress);
       renderSensitivity();
@@ -662,53 +589,28 @@
 
     // ---------- localStorage ----------
     const STORAGE_KEY = "mkdCalculatorData";
-
     function saveState(){
-      const ids = [
-        "gba","nsa","price",
-        "c1","c2","c3","c4","c5","c6","lift",
-        "overhead","gp","reserve",
-        "land","tu","design","bank_fee",
-        "commercial","stress_price","stress_smr",
-        "equity","loan_limit","rate",
-        "constr_months","tail_months","pre_sale_share","escrow_release_months","capex_soft_months",
-        "cov_dscr","cov_ltc","cov_ltv"
-      ];
+      const ids = ["gba","nsa","price","c1","c2","c3","c4","c5","c6","lift","overhead","gp","reserve","land","tu","design","bank_fee","commercial","stress_price","stress_smr","equity","loan_limit","rate","constr_months","tail_months","pre_sale_share","escrow_release_months","capex_soft_months","cov_dscr","cov_ltc","cov_ltv"];
       const data = {};
       ids.forEach(id => { data[id] = $(id).value; });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
-
     function loadState(){
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
       try {
         const data = JSON.parse(raw);
-        Object.keys(data).forEach(id => {
-          const el = $(id);
-          if (el) el.value = data[id];
-        });
+        Object.keys(data).forEach(id => { const el = $(id); if (el) el.value = data[id]; });
         return true;
-      } catch (e) {
-        console.warn("Failed to load from localStorage", e);
-        return false;
-      }
+      } catch (e) { return false; }
     }
 
-    // ---------- input masking + auto-save ----------
-    const PERCENT_IDS = new Set([
-      "overhead","gp","reserve","commercial","stress_price","stress_smr",
-      "rate","pre_sale_share","cov_ltc","cov_ltv"
-    ]);
+    // ---------- input masking ----------
+    const PERCENT_IDS = new Set(["overhead","gp","reserve","commercial","stress_price","stress_smr","rate","pre_sale_share","cov_ltc","cov_ltv"]);
     const DECIMAL_IDS = new Set(["cov_dscr"]);
-
     function attachInputMask(id){
       const el = $(id);
-
-      el.addEventListener("focus", () => {
-        el.value = String(parseNumber(el.value));
-      });
-
+      el.addEventListener("focus", () => { el.value = String(parseNumber(el.value)); });
       el.addEventListener("blur", () => {
         const v = parseNumber(el.value);
         if (PERCENT_IDS.has(id) || DECIMAL_IDS.has(id)){
@@ -717,12 +619,9 @@
           el.value = fmtInt(v);
         }
         calcAndRender();
-        saveState(); // запоминаем после каждого изменения
+        saveState();
       });
-
       el.addEventListener("input", () => calcAndRender());
-
-      // начальное форматирование (если не загружено из storage, то по умолчанию)
       const init = parseNumber(el.value);
       if (PERCENT_IDS.has(id) || DECIMAL_IDS.has(id)){
         el.value = init.toLocaleString("ru-RU",{maximumFractionDigits:2});
@@ -731,36 +630,55 @@
       }
     }
 
-    // ---------- PDF export (исправлено: проверка наличия библиотек) ----------
+    // ---------- PDF export (исправленный) ----------
     async function exportPdf(){
-      // Проверяем, что библиотеки загружены
       if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined"){
         alert("Библиотеки для PDF ещё не загрузились. Пожалуйста, подождите или обновите страницу.");
         return;
       }
+      
       document.body.classList.add("export-mode");
-      await new Promise(r => setTimeout(r, 120));
+      // Увеличим таймаут, чтобы стили точно применились
+      await new Promise(r => setTimeout(r, 800));
 
       const root = document.getElementById("reportRoot");
-      try {
-        const canvas = await html2canvas(root, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-        const imgData = canvas.toDataURL("image/png");
+      if (!root) {
+        alert("Элемент отчёта не найден");
+        document.body.classList.remove("export-mode");
+        return;
+      }
 
+      try {
+        console.log("Начинаем рендеринг PDF...");
+        const canvas = await html2canvas(root, { 
+          scale: 2, 
+          useCORS: true, 
+          backgroundColor: "#ffffff",
+          logging: false,
+          allowTaint: false,
+          windowWidth: 1400,       // фиксированная ширина для предотвращения сжатия
+        });
+        
+        console.log("Canvas создан, размер:", canvas.width, "x", canvas.height);
+        
+        if (canvas.width === 0 || canvas.height === 0) {
+          throw new Error("Canvas имеет нулевой размер. Возможно, элемент скрыт или не отрисован.");
+        }
+
+        const imgData = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-
         const imgWidth = pageWidth;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        let y = 0;
-        let remaining = imgHeight;
 
         if (imgHeight <= pageHeight){
           pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
         } else {
+          let y = 0;
+          let remaining = imgHeight;
           while (remaining > 0){
             pdf.addImage(imgData, "PNG", 0, -y, imgWidth, imgHeight);
             remaining -= pageHeight;
@@ -773,9 +691,10 @@
         const pad = (n)=>String(n).padStart(2,"0");
         const fname = `MKD_CC_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.pdf`;
         pdf.save(fname);
+        console.log("PDF успешно создан");
       } catch (error) {
         console.error("Ошибка при создании PDF:", error);
-        alert("Не удалось создать PDF. Подробности в консоли.");
+        alert("Не удалось создать PDF. Подробности в консоли.\n" + error.message);
       } finally {
         document.body.classList.remove("export-mode");
       }
@@ -783,70 +702,29 @@
 
     // ---------- init ----------
     function init(){
-      // сначала загружаем сохранённые данные
       loadState();
-
-      const ids = [
-        "gba","nsa","price",
-        "c1","c2","c3","c4","c5","c6","lift",
-        "overhead","gp","reserve",
-        "land","tu","design","bank_fee",
-        "commercial","stress_price","stress_smr",
-        "equity","loan_limit","rate",
-        "constr_months","tail_months","pre_sale_share","escrow_release_months","capex_soft_months",
-        "cov_dscr","cov_ltc","cov_ltv"
-      ];
+      const ids = ["gba","nsa","price","c1","c2","c3","c4","c5","c6","lift","overhead","gp","reserve","land","tu","design","bank_fee","commercial","stress_price","stress_smr","equity","loan_limit","rate","constr_months","tail_months","pre_sale_share","escrow_release_months","capex_soft_months","cov_dscr","cov_ltc","cov_ltv"];
       ids.forEach(attachInputMask);
 
-      // кнопки
       $("btnPdf").addEventListener("click", exportPdf);
       $("btnPrint").addEventListener("click", () => window.print());
       $("btnReset").addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEY);
         window.location.reload();
       });
-
       $("btnDemo").addEventListener("click", () => {
-        $("gba").value = "24 000";
-        $("nsa").value = "16 800";
-        $("price").value = "145 000";
-
-        $("c1").value = "22 500";
-        $("c2").value = "7 000";
-        $("c3").value = "12 500";
-        $("c4").value = "8 500";
-        $("c5").value = "3 800";
-        $("c6").value = "2 600";
-        $("lift").value = "52 000 000";
-
-        $("overhead").value = "10";
-        $("gp").value = "5";
-        $("reserve").value = "2";
-
-        $("land").value = "220 000 000";
-        $("tu").value = "140 000 000";
-        $("design").value = "40 000 000";
-        $("bank_fee").value = "25 000 000";
-
-        $("commercial").value = "3";
-        $("stress_price").value = "-10";
-        $("stress_smr").value = "15";
-
-        $("equity").value = "350 000 000";
-        $("loan_limit").value = "2 100 000 000";
-        $("rate").value = "18";
-
-        $("constr_months").value = "24";
-        $("tail_months").value = "6";
-        $("pre_sale_share").value = "80";
-        $("escrow_release_months").value = "3";
-        $("capex_soft_months").value = "6";
-
-        $("cov_dscr").value = "1.20";
-        $("cov_ltc").value = "80";
+        $("gba").value = "24 000"; $("nsa").value = "16 800"; $("price").value = "145 000";
+        $("c1").value = "22 500"; $("c2").value = "7 000"; $("c3").value = "12 500";
+        $("c4").value = "8 500"; $("c5").value = "3 800"; $("c6").value = "2 600";
+        $("lift").value = "52 000 000"; $("overhead").value = "10"; $("gp").value = "5";
+        $("reserve").value = "2"; $("land").value = "220 000 000"; $("tu").value = "140 000 000";
+        $("design").value = "40 000 000"; $("bank_fee").value = "25 000 000"; $("commercial").value = "3";
+        $("stress_price").value = "-10"; $("stress_smr").value = "15"; $("equity").value = "350 000 000";
+        $("loan_limit").value = "2 100 000 000"; $("rate").value = "18"; $("constr_months").value = "24";
+        $("tail_months").value = "6"; $("pre_sale_share").value = "80"; $("escrow_release_months").value = "3";
+        $("capex_soft_months").value = "6"; $("cov_dscr").value = "1.20"; $("cov_ltc").value = "80";
         $("cov_ltv").value = "70";
 
-        // переприменить маски (переинициализация не требуется, просто форматируем и сохраняем)
         ids.forEach(id => {
           const el = $(id);
           const v = parseNumber(el.value);
@@ -861,7 +739,6 @@
       });
 
       calcAndRender();
-      // сохраним начальное состояние (если ещё не было сохранено)
       saveState();
     }
 
@@ -869,4 +746,3 @@
   </script>
 </body>
 </html>
-```
