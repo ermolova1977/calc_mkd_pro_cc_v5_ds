@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>МКД Cost Calculator — CC v2.0 (финальный фикс)</title>
+  <title>МКД Cost Calculator — CC v2.0 (PDF стабильный)</title>
 
   <!-- PDF Export: html2canvas + jsPDF через CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -119,7 +120,7 @@
 
     .mini-note{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.4;}
 
-    /* ---------- РЕЖИМ ЭКСПОРТА (только светлый фон и скрытие кнопок) ---------- */
+    /* ---------- РЕЖИМ ЭКСПОРТА (только светлый фон, без скрытия, но без кнопок) ---------- */
     body.export-mode{
       background:#ffffff !important;
     }
@@ -128,12 +129,16 @@
       border:1px solid #a0b3d9 !important;
       box-shadow:none !important;
     }
-    /* Не меняем стили input — они останутся с тёмным фоном, но на белой карточке это нормально */
+    /* скрываем все кнопки, кроме может быть нужно, но оставим пока */
     body.export-mode button,
-    body.export-mode .btns button,
-    body.export-mode .print-btn,
-    body.export-mode .btns{
+    body.export-mode .btns,
+    body.export-mode .print-btn{
       display:none !important;
+    }
+    /* фиксируем ширину контейнера, чтобы избежать сжатия */
+    body.export-mode .wrap{
+      max-width:1400px !important;
+      width:1400px !important;
     }
   </style>
 </head>
@@ -155,7 +160,7 @@
     </div>
 
     <div class="grid">
-      <!-- LEFT: INPUTS -->
+      <!-- LEFT: INPUTS (сокращён для читаемости, но все поля присутствуют) -->
       <div class="card">
         <h2>1) Исходные данные</h2>
         <div class="row"><label for="gba">GBA (м²)</label><input id="gba" type="text" value="20000" inputmode="numeric" /></div>
@@ -534,16 +539,20 @@
       }
     }
 
-    // ---------- PDF export (альбомный, без изменения стилей input) ----------
+    // ---------- PDF export (упрощённый, с фиксированной шириной) ----------
     async function exportPdf(){
       if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined"){
         alert("Библиотеки для PDF ещё не загрузились. Пожалуйста, подождите или обновите страницу.");
         return;
       }
       
+      // Показываем сообщение о начале
+      console.log("Начинаем экспорт PDF...");
+
       document.body.classList.add("export-mode");
-      // Даём время на применение стилей (в основном скрытие кнопок)
-      await new Promise(r => setTimeout(r, 500));
+      
+      // Даём время на применение стилей (скрытие кнопок)
+      await new Promise(r => setTimeout(r, 1000));
 
       const root = document.getElementById("reportRoot");
       if (!root) {
@@ -553,25 +562,24 @@
       }
 
       try {
-        console.log("Начинаем рендеринг PDF (альбомный)...");
+        console.log("Запускаем html2canvas...");
         const canvas = await html2canvas(root, { 
           scale: 2,
-          useCORS: true, 
           backgroundColor: "#ffffff",
-          logging: false,
+          logging: true,          // включим логи для отладки
           allowTaint: false,
-          // Не задаём windowWidth — пусть будет естественная ширина
+          useCORS: true,
+          windowWidth: 1400,       // фиксированная ширина
         });
         
         console.log("Canvas создан, размер:", canvas.width, "x", canvas.height);
         
         if (canvas.width === 0 || canvas.height === 0) {
-          throw new Error("Canvas имеет нулевой размер. Возможно, элемент скрыт или не отрисован.");
+          throw new Error("Canvas имеет нулевой размер");
         }
 
         const imgData = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
-        // АЛЬБОМНАЯ ОРИЕНТАЦИЯ
         const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -596,10 +604,10 @@
         const pad = (n)=>String(n).padStart(2,"0");
         const fname = `MKD_CC_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.pdf`;
         pdf.save(fname);
-        console.log("PDF успешно создан");
+        console.log("PDF сохранён");
       } catch (error) {
         console.error("Ошибка при создании PDF:", error);
-        alert("Не удалось создать PDF. Подробности в консоли.\n" + error.message);
+        alert("Ошибка: " + error.message);
       } finally {
         document.body.classList.remove("export-mode");
       }
