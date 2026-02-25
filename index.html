@@ -2,7 +2,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>МКД Cost Calculator — CC v2.0 (альбомный PDF)</title>
+  <title>МКД Cost Calculator — CC v2.0 (финальный фикс)</title>
 
   <!-- PDF Export: html2canvas + jsPDF через CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -119,49 +119,22 @@
 
     .mini-note{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.4;}
 
-    /* ---------- РЕЖИМ ЭКСПОРТА (только смена цвета и скрытие кнопок) ---------- */
+    /* ---------- РЕЖИМ ЭКСПОРТА (только светлый фон и скрытие кнопок) ---------- */
     body.export-mode{
       background:#ffffff !important;
-      color:#0b1020 !important;
     }
     body.export-mode .card{
       background:#ffffff !important;
       border:1px solid #a0b3d9 !important;
       box-shadow:none !important;
     }
-    body.export-mode .card h2,
-    body.export-mode th{
-      color:#0b1020 !important;
-    }
-    body.export-mode .sub,
-    body.export-mode label,
-    body.export-mode .small,
-    body.export-mode .report-meta,
-    body.export-mode .badge,
-    body.export-mode .pill{
-      color:#334155 !important;
-    }
-    body.export-mode input,
-    body.export-mode select{
-      background:#ffffff !important;
-      color:#0b1020 !important;
-      border:1px solid #a0b3d9 !important;
-    }
-    body.export-mode .input-wrap::after{
-      color:#64748b !important;
-    }
-    body.export-mode .k{
-      background:#f8fafc !important;
-      border:1px solid #cbd5e1 !important;
-    }
-    /* Скрываем все кнопки */
+    /* Не меняем стили input — они останутся с тёмным фоном, но на белой карточке это нормально */
     body.export-mode button,
     body.export-mode .btns button,
     body.export-mode .print-btn,
     body.export-mode .btns{
       display:none !important;
     }
-    /* Никаких принудительных табличных раскладок — оставляем как есть */
   </style>
 </head>
 
@@ -561,7 +534,7 @@
       }
     }
 
-    // ---------- PDF export (альбомный, щадящие стили) ----------
+    // ---------- PDF export (альбомный, без изменения стилей input) ----------
     async function exportPdf(){
       if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined"){
         alert("Библиотеки для PDF ещё не загрузились. Пожалуйста, подождите или обновите страницу.");
@@ -569,6 +542,7 @@
       }
       
       document.body.classList.add("export-mode");
+      // Даём время на применение стилей (в основном скрытие кнопок)
       await new Promise(r => setTimeout(r, 500));
 
       const root = document.getElementById("reportRoot");
@@ -581,12 +555,12 @@
       try {
         console.log("Начинаем рендеринг PDF (альбомный)...");
         const canvas = await html2canvas(root, { 
-          scale: 2.5,               // повышенная чёткость
+          scale: 2,
           useCORS: true, 
           backgroundColor: "#ffffff",
           logging: false,
           allowTaint: false,
-          windowWidth: 1600,         // ширина для альбомной ориентации
+          // Не задаём windowWidth — пусть будет естественная ширина
         });
         
         console.log("Canvas создан, размер:", canvas.width, "x", canvas.height);
